@@ -2,17 +2,15 @@ import discord
 from discord.ext import commands
 import nacl
 import os
-import requests
 import random
 import json
-import urllib.request
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import asyncpraw
 
-from MafZ import solve
 from WebServer import StayAlive
 
+import lyricsgenius as lg
 import Moderation as md
 import Utility as u
 import Fun as f
@@ -27,14 +25,28 @@ owners = [564461721268518932, 433953456315957258]
 reddit = asyncpraw.Reddit(
     client_id=os.getenv('RCID'),
     client_secret=os.getenv('RS'),
-    user_agent="aggrobawt by vlad the not so glad",
+    user_agent="BarneyBawt by Vlad the not so Glad and BenderLLL",
 )
 #----------------------------------------------
 not_good_words = [
-    "nigga", "nigger", "Nigge", "simp", "faggot", "fag", "kaffir",
-    "ching-chong"
+    "nigger"
 ]
 
+emojis = ["🇺","💥","🇬","🇦","🇾"]
+pongreactions = ["Wtf m8","Why?","Dipshit","Wtf","Y PONG?","Kill me"]
+#----------------------------------------------
+spotify_client_credentials = SpotifyClientCredentials(os.getenv('SPOTCLIID'),
+                                                      os.getenv('SPOTSECRET'))
+auth_manager = spotify_client_credentials
+sp = spotipy.Spotify(auth_manager=auth_manager)
+#----------------------------------------------
+genius = lg.Genius(os.getenv('GENIUSKEY'),
+                   skip_non_songs=True,
+                   excluded_terms=[
+                       "(Remix)", "(Live)", "Remix", "Live", "(Remastered)",
+                       "(Live)", "Remastered", "Live"
+                   ],
+                   remove_section_headers=True)
 
 @client.event
 async def on_ready():
@@ -44,11 +56,19 @@ async def on_ready():
 
 
 @client.event
-async def on_message(msg):
-    try:
-        await md.AntiSlur(msg, not_good_words, client)
-    except:
-        print("finally, inner peace")
+async def on_message(ctx):
+    if "hi bot" in ctx.content.lower():
+      await ctx.channel.send("Hello "+ctx.author.mention + " \n y pong" )
+    if "@everyone" in ctx.content or "@here" in ctx.content:
+      for emo in emojis:
+        print(emo);
+        await ctx.add_reaction(emo)
+      await ctx.channel.send(pongreactions[random.randint(0,len(pongreactions)-1)])
+    if "or am i" in ctx.content.lower() or "or is it" in ctx.content.lower():
+      await ctx.channel.send("https://youtu.be/1dwu4iVA1yo")
+    await md.AntiSlur(ctx, not_good_words, client)
+    await u.EmojiGiver(ctx)
+    await client.process_commands(ctx)
 
 
 @client.command()
@@ -60,10 +80,21 @@ async def hello(ctx):
 async def invite(ctx):
     await u.invite(ctx)
 
+@client.command(aliases=['yt', 'youtube', 'youtubesearch'])
+async def ytsrch(ctx, srchTerm):
+    srchTerm = (ctx.message.content)[ctx.message.content.index(" "):]
+    srchTerm = srchTerm.replace(" ", "+")
+    await f.ytsrch(ctx, srchTerm)
+
+@client.command(aliases=['post', 'redditpost', 'sub'])
+async def getpost(ctx, srchTerm):
+    srchTerm = (ctx.message.content)[ctx.message.content.index(" "):]
+    srchTerm = srchTerm.replace(" ", "+")
+    await f.getPost(ctx,reddit, srchTerm)
 
 @client.command(aliases=['purge', 'p', 'c'])
 @commands.has_permissions(manage_messages=True)
-async def clear(ctx, amount=3):
+async def clear(ctx, amount=1):
     await md.purge(ctx, amount)
 
 
@@ -79,7 +110,7 @@ async def kick(ctx, member: discord.Member, *, reason1="no reason"):
 
 @client.command(aliases=['getmeme'])
 async def meme(ctx):
-    await f.getMeme(ctx, client, reddit)
+  await f.getMeme(ctx)
 
 
 @client.command(aliases=['ub'])
@@ -131,14 +162,43 @@ async def coin(ctx):
     await u.coin(ctx)
 
 
+@client.command(aliases=['spsrch'])
+async def spotifysearch(ctx,term):
+    term = (ctx.message.content)[ctx.message.content.index(" "):]
+    await f.getSpotifyLink(ctx,term,sp)
+
+
+@client.command(aliases=['recsong'])
+async def songrec(ctx):
+    await f.getTrack(ctx,sp)
+
+@client.command(aliases=['lyrics'])
+async def songlyrics(ctx):
+    term = ""
+    isun = False
+    if "," in ctx.message.content:
+      term = (ctx.message.content)[ctx.message.content.index(" "):ctx.message.content.index(",")]
+      isun = (ctx.message.content)[ctx.message.content.index(","):]
+    else:
+      term = (ctx.message.content)[ctx.message.content.index(" "):]
+      isun = False 
+    await f.getLyrics(ctx,term,isun,sp,genius)
+
+    
+@client.command(aliases=['tt'])
+async def topten(ctx):
+    await f.getTopTen(ctx,sp)
+
+
 @client.command()
 async def roll(ctx, sides=6, startFromZero=False):
     await u.roll(ctx, sides, startFromZero)
 
 
 @client.command()
-async def eval(ctx, eqn=0):
-    await u.eval(ctx, eqn)
+async def eval(ctx):
+   eqn = ctx.message.content[ctx.message.content.index(" "):]
+   await u.eval(ctx, eqn)
 
 
 @client.command()
@@ -149,6 +209,10 @@ async def joke(ctx, nsfw=False):
 @client.command()
 async def gay(ctx, member: discord.Member):
     await f.gay(ctx, member)
+
+@client.command(aliases=['pu', 'pul','line','pickup'])
+async def pickupline(ctx):
+    await f.getPickupLine(ctx)
 
 
 @client.command()
@@ -163,7 +227,6 @@ async def createrole(ctx, *, content):
     '''
     embed = discord.Embed(name='New role created', description=description)
     await ctx.send(content=None, embed=embed)
-
 
 #----------------------------------------------
 StayAlive()

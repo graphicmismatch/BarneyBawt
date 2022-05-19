@@ -1,11 +1,6 @@
 import discord
-from discord.ext import commands
 import nacl
-import os
-import requests
-import random
-import json
-import urllib.request
+
 
 
 async def purge(ctx, amt):
@@ -72,21 +67,8 @@ async def mute(ctx, member: discord.Member, reason="no reason"):
         f"{member} has been muted for{reason} by {ctx.message.author}")
 
 
-async def AntiSlur(msg, not_good_words, client):
-    for words in not_good_words:
-        if words.casefold() in msg.content.casefold():
-            await msg.delete()
-            await msg.channel.send(f"{msg.author.mention}  dont swear!!")
-
-        if ":" == msg.content[0] and ":" == msg.content[-1]:
-            emo_name = msg.content[1:-1]
-            for emoji in msg.guild.emojis:
-                if emo_name == emoji.name:
-                    try:
-                        await msg.channel.send(str(emoji))
-                        await msg.delete()
-                    except IndexError:
-                        print("not an emoji")
-
-                    break
-    await client.process_commands(msg)
+async def AntiSlur(ctx, not_good_words, client):
+  for words in not_good_words:
+    if words.casefold() in ctx.content.casefold():
+      await ctx.delete()
+      await ctx.channel.send(f"{ctx.author.mention}  dont swear!!")

@@ -1,13 +1,7 @@
 import discord
-from discord.ext import commands
 import nacl
-import os
-import requests
 import random
-import json
-import urllib.request
-
-from MafZ import solve
+from MafZ import giveAns
 
 
 async def invite(ctx):
@@ -69,7 +63,8 @@ async def avatar(ctx, member: discord.Member = None):
 
 
 async def eval(ctx, eqn=0):
-    await ctx.send(f"The answer is:\n**{solve(eqn)}**")
+    ans = giveAns(eqn)
+    await ctx.send(f"The answer is:\n**{ans}**")
 
 
 async def coin(ctx):
@@ -83,3 +78,17 @@ async def roll(ctx, sides=6, startFromZero=False):
     if startFromZero:
         x -= 1
     await ctx.send(f"The die rolled a **{x}**!")
+
+
+async def EmojiGiver(ctx):
+  if ":" in ctx.content:
+    if ":" == ctx.content[0] and ":" == ctx.content[-1]:
+      emo_name = ctx.content[1:-1]
+      for emoji in ctx.guild.emojis:
+          if emo_name == emoji.name:
+            try:
+              await ctx.channel.send(str(emoji))
+              await ctx.delete()
+            except IndexError:
+              print("not an emoji")
+            break
