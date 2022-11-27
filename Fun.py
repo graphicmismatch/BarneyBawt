@@ -25,7 +25,7 @@ async def joke(ctx, nsfw=False):
                 joke = j.get_joke(blacklist=[], lang="en")
             else:
                 joke = j.get_joke(
-                    blacklist=['nsfw', 'racist', 'sexist', 'religious'],
+                    blacklist=['nsfw', 'racist', 'sexist'],
                     lang="en")
             if joke["type"] == "single":
                 await ctx.send(joke["joke"] + "\n\nSomeone kill me for this")
@@ -168,10 +168,19 @@ async def getTrack(ctx,sp):
         trackNo])
 
 async def getPickupLine(ctx):
-  x = requests.request("GET","https://getpickuplines.herokuapp.com/lines/random")
-  request = json.loads(x.text)
-  line = request["line"]
-  await ctx.send(f"Here iz pick up line for u: \n  {line}")
+  x = 0
+  request = 0
+  line = 0
+  if random.randint(1,100)%2:
+    x = requests.request("GET","https://getpickuplines.herokuapp.com/lines/random")
+    request = json.loads(x.text)
+    line = request["line"] 
+  else:
+    x = requests.request("GET","https://jokeandpickupapi.herokuapp.com/pickup/random")
+    request = json.loads(x.text)
+    line = request["title"] + "\n     "+request["body"]
+  line.replace("[her name]","JOE MAMA")
+  await ctx.send(f"Here iz pick up line for u: \n\n{line}")
   
 
 def splitMessage(s):
